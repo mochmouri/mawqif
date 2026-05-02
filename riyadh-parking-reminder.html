@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Riyadh Parking Guard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --gold: #c9a84c;
+    --gold-dim: #7a6228;
+    --green: #3ecf8e;
+    --red: #f25555;
+    --orange: #f09c3c;
+    --text: #e8e8e8;
+    --text-dim: #666;
+    --text-mid: #999;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 40px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%;
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-icon {
+    width: 38px; height: 38px;
+    background: var(--gold);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .header-text h1 {
+    font-size: 16px; font-weight: 700; letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  .header-text p {
+    font-size: 11px; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace;
+    margin-top: 2px;
+  }
+
+  /* STATUS CARD */
+  .status-card {
+    width: calc(100% - 32px);
+    margin: 20px 16px 0;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .status-top {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .status-dot-ring {
+    position: relative;
+    width: 72px; height: 72px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .status-dot-ring::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+  }
+  .status-dot-ring.active::before { border-color: var(--gold); animation: pulse-ring 2s ease infinite; }
+  .status-dot-ring.paid::before { border-color: var(--green); }
+  .status-dot-ring.warning::before { border-color: var(--orange); animation: pulse-ring 1s ease infinite; }
+  .status-dot-ring.danger::before { border-color: var(--red); animation: pulse-ring 0.5s ease infinite; }
+  .status-icon { font-size: 32px; }
+
+  @keyframes pulse-ring {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.08); }
+  }
+
+  .status-label {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .status-label.active { color: var(--gold); }
+  .status-label.paid { color: var(--green); }
+  .status-label.warning { color: var(--orange); }
+  .status-label.danger { color: var(--red); }
+
+  .zone-name {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    text-align: center; padding: 0 16px;
+  }
+
+  /* TIMER */
+  .timer-bar {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .timer-bar.show { display: flex; }
+
+  .timer-row {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .timer-label { font-size: 11px; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; }
+  .timer-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px; font-weight: 600; letter-spacing: 0.05em;
+    color: var(--gold);
+  }
+  .timer-value.warning { color: var(--orange); }
+  .timer-value.danger { color: var(--red); }
+
+  .grace-note {
+    font-size: 11px; color: var(--text-dim); text-align: right;
+  }
+  .grace-note span { color: var(--green); }
+
+  .progress-track {
+    height: 3px; background: var(--border); border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 2px;
+    background: var(--gold);
+    transition: width 1s linear, background 0.5s;
+  }
+
+  /* ACTION BUTTONS */
+  .actions {
+    width: calc(100% - 32px);
+    margin: 12px 16px 0;
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn {
+    flex: 1; padding: 14px 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn:hover { background: var(--surface2); border-color: #3a3a3a; }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: var(--gold); border-color: var(--gold); color: #000; font-weight: 700; }
+  .btn.primary:hover { background: #d4b05e; }
+  .btn.green { background: transparent; border-color: var(--green); color: var(--green); }
+  .btn.green:hover { background: rgba(62,207,142,0.08); }
+  .btn.danger { background: transparent; border-color: var(--red); color: var(--red); }
+  .btn.danger:hover { background: rgba(242,85,85,0.08); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* GPS STATUS */
+  .gps-bar {
+    width: calc(100% - 32px);
+    margin: 12px 16px 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px;
+  }
+  .gps-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-dim); flex-shrink: 0;
+  }
+  .gps-dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .gps-dot.searching { background: var(--orange); animation: blink 1s ease infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+  .gps-text { color: var(--text-dim); flex: 1; }
+  .gps-coords { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); }
+
+  /* NOTIFICATION LOG */
+  .notif-section {
+    width: calc(100% - 32px);
+    margin: 20px 16px 0;
+  }
+  .section-label {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim); font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .clear-btn {
+    background: none; border: none; color: var(--text-dim); font-size: 10px;
+    cursor: pointer; font-family: 'IBM Plex Mono', monospace;
+    padding: 0; letter-spacing: 0.08em;
+  }
+  .clear-btn:hover { color: var(--text); }
+
+  .notif-list {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .notif-item {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    display: flex; gap: 10px; align-items: flex-start;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .notif-item.info { border-left-color: var(--gold); }
+  .notif-item.warn { border-left-color: var(--orange); }
+  .notif-item.success { border-left-color: var(--green); }
+  .notif-item.danger { border-left-color: var(--red); }
+
+  .notif-emoji { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .notif-body { flex: 1; }
+  .notif-msg { font-size: 12px; color: var(--text); line-height: 1.4; }
+  .notif-time { font-size: 10px; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; margin-top: 3px; }
+
+  .empty-log {
+    padding: 24px; text-align: center;
+    color: var(--text-dim); font-size: 12px;
+    border: 1px dashed var(--border); border-radius: 8px;
+  }
+
+  /* ZONES LIST */
+  .zones-section {
+    width: calc(100% - 32px);
+    margin: 20px 16px 0;
+  }
+  .zones-toggle {
+    background: none; border: none; color: var(--gold);
+    font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer; letter-spacing: 0.08em;
+    padding: 6px 0;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .zones-toggle:hover { color: #d4b05e; }
+
+  .zones-list {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .zones-list.show { display: flex; }
+  .zones-list::-webkit-scrollbar { width: 3px; }
+  .zones-list::-webkit-scrollbar-track { background: transparent; }
+  .zones-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .zone-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-mid);
+    font-family: 'IBM Plex Mono', monospace;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .zone-item.nearby {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+  .zone-dist { font-size: 10px; color: var(--text-dim); }
+  .zone-dist.close { color: var(--green); }
+
+  /* DEMO CONTROLS */
+  .demo-section {
+    width: calc(100% - 32px);
+    margin: 20px 16px 0;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px dashed var(--border);
+    background: var(--surface);
+  }
+  .demo-label {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim); font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 10px;
+  }
+  .demo-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .demo-btn {
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-mid);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .demo-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .demo-btn:active { transform: scale(0.95); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🅿️</div>
+  <div class="header-text">
+    <h1>Riyadh Parking Guard</h1>
+    <p>147 zones · 3.45 SAR/hr · 8AM–12AM</p>
+  </div>
+</div>
+
+<!-- GPS STATUS -->
+<div class="gps-bar" id="gpsBar">
+  <div class="gps-dot" id="gpsDot"></div>
+  <div class="gps-text" id="gpsText">Enable location to start monitoring</div>
+  <div class="gps-coords" id="gpsCoords"></div>
+</div>
+
+<!-- MAIN STATUS CARD -->
+<div class="status-card">
+  <div class="status-top">
+    <div class="status-dot-ring" id="statusRing">
+      <span class="status-icon" id="statusIcon">🔍</span>
+    </div>
+    <div class="status-label" id="statusLabel">Scanning...</div>
+    <div class="zone-name" id="zoneName">No paid zone detected nearby</div>
+  </div>
+
+  <div class="timer-bar" id="timerBar">
+    <div class="timer-row">
+      <span class="timer-label">PARKED FOR</span>
+      <span class="timer-value" id="timerDisplay">00:00</span>
+    </div>
+    <div class="timer-row">
+      <span class="grace-note">Grace period: <span>15 min</span></span>
+      <span class="timer-label" id="graceLabel" style="color:var(--green)">✓ In grace period</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="actions" id="actionsRow">
+  <button class="btn" id="startBtn" onclick="startMonitoring()">📍 Start Monitoring</button>
+  <a class="btn" href="https://riyadhparking.sa/Booking" target="_blank">💳 Pay Now</a>
+</div>
+
+<div class="actions" id="parkingActions" style="display:none">
+  <button class="btn green" onclick="markPaid()">✓ I Paid</button>
+  <button class="btn danger" onclick="stopSession()">✗ Stop</button>
+</div>
+
+<!-- NOTIFICATION LOG -->
+<div class="notif-section">
+  <div class="section-label">
+    Activity Log
+    <button class="clear-btn" onclick="clearLog()">CLEAR</button>
+  </div>
+  <div class="notif-list" id="notifList">
+    <div class="empty-log">No activity yet.<br>Start monitoring to detect paid zones.</div>
+  </div>
+</div>
+
+<!-- ZONES NEARBY -->
+<div class="zones-section">
+  <button class="zones-toggle" onclick="toggleZones()">
+    <span id="zonesArrow">▶</span> View all 147 covered zones
+  </button>
+  <div class="zones-list" id="zonesList"></div>
+</div>
+
+<!-- DEMO CONTROLS -->
+<div class="demo-section">
+  <div class="demo-label">🧪 Demo / Test (simulates GPS)</div>
+  <div class="demo-btns">
+    <button class="demo-btn" onclick="demoArrive()">Arrive at zone</button>
+    <button class="demo-btn" onclick="demo5min()">Skip to 5 min</button>
+    <button class="demo-btn" onclick="demo10min()">Skip to 10 min</button>
+    <button class="demo-btn" onclick="demo15min()">Skip to 15 min</button>
+    <button class="demo-btn" onclick="demoLeave()">Leave zone</button>
+    <button class="demo-btn" onclick="demoFreeHours()">Free hours (2AM)</button>
+  </div>
+</div>
+
+<script>
+// ── ZONE DATA ────────────────────────────────────────────────────
+const ZONES = [{"id":"zone-11a---salah-al-din-al-ayyubi---01","name":"Zone 11A - Salah Al Din Al Ayyubi - 01","street":"Salah Al Din Al Ayyubi","lat":24.695,"lng":46.718,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---king-abdulaziz---02","name":"Zone 11A - King Abdulaziz - 02","street":"King Abdulaziz","lat":24.6877,"lng":46.7219,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---king-abdulaziz---03","name":"Zone 11A - King Abdulaziz - 03","street":"King Abdulaziz","lat":24.6882,"lng":46.7224,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---prince-mohamed-bin-abdulaziz---01","name":"Zone 11A - Prince Mohamed bin Abdulaziz - 01","street":"Prince Mohamed bin Abdulaziz","lat":24.7021,"lng":46.6742,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---king-abdulaziz---01","name":"Zone 11A - King Abdulaziz - 01","street":"King Abdulaziz","lat":24.6887,"lng":46.7229,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-005---al-dabab-street---01","name":"Zone 005 - Al Dabab Street - 01","street":"Al Dabab Street","lat":24.688,"lng":46.715,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---al-dabab-street---01","name":"Zone 11A - Al Dabab Street - 01","street":"Al Dabab Street","lat":24.6885,"lng":46.7155,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---makka-el-mokarama---01","name":"Zone 11A - Makka El Mokarama - 01","street":"Makka El Mokarama","lat":24.67,"lng":46.71,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17b--abdulrahman-al-ghafeqi-road---02","name":"Zone 17B- Abdulrahman Al Ghafeqi Road - 02","street":"Abdulrahman Al Ghafeqi Road","lat":24.77,"lng":46.6501,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17b--abdulrahman-al-ghafeqi-road---01","name":"Zone 17B- Abdulrahman Al Ghafeqi Road - 01","street":"Abdulrahman Al Ghafeqi Road","lat":24.77,"lng":46.65,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-005---prince-mohamed-bin-abdulaziz-street---01","name":"Zone 005 - Prince Mohamed bin Abdulaziz Street - 01","street":"Prince Mohamed bin Abdulaziz Street","lat":24.7021,"lng":46.6742,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17b---eastern-ring-road---01","name":"Zone 17B - Eastern Ring Road - 01","street":"Eastern Ring Road","lat":24.75,"lng":46.78,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17a---othman-bin-affan-road---02","name":"Zone 17A - Othman Bin Affan road - 02","street":"Othman Bin Affan road","lat":24.76,"lng":46.69,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17a---othman-bin-affan-road---01","name":"Zone 17A - Othman Bin Affan road - 01","street":"Othman Bin Affan road","lat":24.7605,"lng":46.6905,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---prince-mohamed-bin-abdulaziz-street---01","name":"Zone 004 - Prince Mohamed bin Abdulaziz Street - 01","street":"Prince Mohamed bin Abdulaziz Street","lat":24.7026,"lng":46.6747,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---prince-mamduh-bin-abdulaziz---02","name":"Zone 11A - Prince Mamduh bin Abdulaziz - 02","street":"Prince Mamduh bin Abdulaziz","lat":24.715,"lng":46.668,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---prince-mamduh-bin-abdulaziz---01","name":"Zone 11A - Prince Mamduh bin Abdulaziz - 01","street":"Prince Mamduh bin Abdulaziz","lat":24.7155,"lng":46.6685,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-005---prince-sultan-bin-abdulaziz---02","name":"Zone 005 - Prince Sultan bin Abdulaziz - 02","street":"Prince Sultan bin Abdulaziz","lat":24.685,"lng":46.705,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-005---prince-sultan-bin-abdulaziz---01","name":"Zone 005 - Prince Sultan bin Abdulaziz - 01","street":"Prince Sultan bin Abdulaziz","lat":24.6855,"lng":46.7055,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---abdullah-bin-suliman-al-hamdan-street---01","name":"Zone 004 - Abdullah bin Suliman Al Hamdan Street - 01","street":"Abdullah bin Suliman Al Hamdan Street","lat":24.705,"lng":46.665,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17a---king-abdullah-rd---03","name":"Zone 17A - King Abdullah Rd - 03","street":"King Abdullah Rd","lat":24.75,"lng":46.62,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---abdullah-bin-suliman-al-hamdan-street---02","name":"Zone 004 - Abdullah bin Suliman Al Hamdan Street - 02","street":"Abdullah bin Suliman Al Hamdan Street","lat":24.7055,"lng":46.6655,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---abdullah-bin-suliman-al-hamdan---01","name":"Zone 11A - Abdullah bin Suliman Al Hamdan - 01","street":"Abdullah bin Suliman Al Hamdan","lat":24.705,"lng":46.665,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14f---king-abdullah-rd---01","name":"Zone 14F - King Abdullah Rd - 01","street":"King Abdullah Rd","lat":24.7505,"lng":46.6205,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14e---king-abdullah---01","name":"Zone 14E - King Abdullah - 01","street":"King Abdullah","lat":24.75,"lng":46.62,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17a---king-abdullah---02","name":"Zone 17A - King Abdullah - 02","street":"King Abdullah","lat":24.7505,"lng":46.6205,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---prince-mamduh-bin-abdulaziz---02","name":"Zone 004 - Prince Mamduh bin Abdulaziz - 02","street":"Prince Mamduh bin Abdulaziz","lat":24.716,"lng":46.669,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---prince-mamduh-bin-abdulaziz---01","name":"Zone 004 - Prince Mamduh bin Abdulaziz - 01","street":"Prince Mamduh bin Abdulaziz","lat":24.7165,"lng":46.6695,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---al-uroba-st---01","name":"Zone 003 - Al Uroba St - 01","street":"Al Uroba St","lat":24.7271,"lng":46.6603,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-005---prince-mohamed-bin-abdulaziz-street---02","name":"Zone 005 - Prince Mohamed bin Abdulaziz Street - 02","street":"Prince Mohamed bin Abdulaziz Street","lat":24.7031,"lng":46.6752,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---prince-mohamed-bin-abdulaziz-street---02","name":"Zone 004 - Prince Mohamed bin Abdulaziz Street - 02","street":"Prince Mohamed bin Abdulaziz Street","lat":24.7036,"lng":46.6757,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-005---makka-el-mokarama---01","name":"Zone 005 - Makka El Mokarama - 01","street":"Makka El Mokarama","lat":24.6705,"lng":46.7105,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11a---al-uroba-road---01","name":"Zone 11A - Al Uroba Road - 01","street":"Al Uroba Road","lat":24.7271,"lng":46.6603,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---sheikh-abdulaziz-al-sheikh---02","name":"Zone 004 - Sheikh Abdulaziz Al-Sheikh - 02","street":"Sheikh Abdulaziz Al-Sheikh","lat":24.71,"lng":46.67,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---king-abdulaziz-st---01","name":"Zone 003 - King Abdulaziz St - 01","street":"King Abdulaziz St","lat":24.6877,"lng":46.7219,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-005---al-ulaya---01","name":"Zone 005 - Al Ulaya - 01","street":"Al Ulaya","lat":24.698,"lng":46.683,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---al-uroba-st---02","name":"Zone 003 - Al Uroba St - 02","street":"Al Uroba St","lat":24.7276,"lng":46.6608,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17b---king-abdullah-rd---01","name":"Zone 17B - King Abdullah Rd - 01","street":"King Abdullah Rd","lat":24.751,"lng":46.621,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---sheikh-abdulaziz-al-sheikh---01","name":"Zone 004 - Sheikh Abdulaziz Al-Sheikh - 01","street":"Sheikh Abdulaziz Al-Sheikh","lat":24.7105,"lng":46.6705,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14d---king-abdullah---01","name":"Zone 14D - King Abdullah - 01","street":"King Abdullah","lat":24.751,"lng":46.621,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-15c---king-abdullah-rd---02","name":"Zone 15C - King Abdullah Rd - 02","street":"King Abdullah Rd","lat":24.7515,"lng":46.6215,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17a---king-abdullah---01","name":"Zone 17A - King Abdullah - 01","street":"King Abdullah","lat":24.7515,"lng":46.6215,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---abdullah-al-anqary-st---01","name":"Zone 003 - Abdullah Al-Anqary St - 01","street":"Abdullah Al-Anqary St","lat":24.7,"lng":46.672,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14e---othman-bin-affan-road---01","name":"Zone 14E - Othman Bin Affan road - 01","street":"Othman Bin Affan road","lat":24.761,"lng":46.691,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---abdullah-al-anqary-st---02","name":"Zone 003 - Abdullah Al-Anqary St - 02","street":"Abdullah Al-Anqary St","lat":24.7005,"lng":46.6725,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14f---othman-bin-affan-road---01","name":"Zone 14F - Othman Bin Affan road - 01","street":"Othman Bin Affan road","lat":24.7615,"lng":46.6915,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---al-ulaya---01","name":"Zone 004 - Al Ulaya - 01","street":"Al Ulaya","lat":24.6985,"lng":46.6835,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---engineer-mosaed-al-anqary-st---03","name":"Zone 003 - Engineer Mosaed Al-Anqary St - 03","street":"Engineer Mosaed Al-Anqary St","lat":24.699,"lng":46.673,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---king-fahd---01","name":"Zone 007 - King Fahd - 01","street":"King Fahd","lat":24.7136,"lng":46.6753,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-004---al-uroba---01","name":"Zone 004 - Al Uroba - 01","street":"Al Uroba","lat":24.7271,"lng":46.6603,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---al-uroba-st---03","name":"Zone 003 - Al Uroba St - 03","street":"Al Uroba St","lat":24.7281,"lng":46.6613,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---engineer-mosaed-al-anqary-st---01","name":"Zone 003 - Engineer Mosaed Al-Anqary St - 01","street":"Engineer Mosaed Al-Anqary St","lat":24.6995,"lng":46.6735,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14e---abu-baker-road---01","name":"Zone 14E - Abu Baker Road - 01","street":"Abu Baker Road","lat":24.765,"lng":46.695,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---engineer-mosaed-al-anqary-st---02","name":"Zone 003 - Engineer Mosaed Al-Anqary St - 02","street":"Engineer Mosaed Al-Anqary St","lat":24.7,"lng":46.674,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14d---abu-baker-road---01","name":"Zone 14D - Abu Baker Road - 01","street":"Abu Baker Road","lat":24.7655,"lng":46.6955,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---prince-ahmed-bin-abdulaziz-st---02","name":"Zone 003 - Prince Ahmed bin Abdulaziz St - 02","street":"Prince Ahmed bin Abdulaziz St","lat":24.692,"lng":46.678,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---prince-mohamed-bin-abdulaziz---03","name":"Zone 007 - Prince Mohamed Bin Abdulaziz - 03","street":"Prince Mohamed Bin Abdulaziz","lat":24.7021,"lng":46.6742,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---prince-mohamed-bin-abdulaziz---01","name":"Zone 007 - Prince Mohamed Bin Abdulaziz - 01","street":"Prince Mohamed Bin Abdulaziz","lat":24.7026,"lng":46.6747,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---prince-sultan-bin-abdulaziz-road---01","name":"Zone 007 - Prince Sultan Bin Abdulaziz Road - 01","street":"Prince Sultan Bin Abdulaziz Road","lat":24.685,"lng":46.705,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---prince-sultan-bin-abdulaziz-road---02","name":"Zone 007 - Prince Sultan Bin Abdulaziz Road - 02","street":"Prince Sultan Bin Abdulaziz Road","lat":24.6855,"lng":46.7055,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003--prince-sultan-bin-salman-st---02","name":"Zone 003 -Prince Sultan bin Salman St - 02","street":"Prince Sultan bin Salman St","lat":24.7181,"lng":46.6621,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---prince-ahmed-bin-abdulaziz-st---01","name":"Zone 003 - Prince Ahmed bin Abdulaziz St - 01","street":"Prince Ahmed bin Abdulaziz St","lat":24.6925,"lng":46.6785,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---prince-sultan-bin-salman-st---01","name":"Zone 003 - Prince Sultan bin Salman St - 01","street":"Prince Sultan bin Salman St","lat":24.718,"lng":46.662,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---sheikh-abdulaziz-al-sheikh---01","name":"Zone 007 - Sheikh Abdulaziz Al-Sheikh - 01","street":"Sheikh Abdulaziz Al-Sheikh","lat":24.711,"lng":46.671,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---makka-al-mokarama---01","name":"Zone 007 - Makka Al Mokarama - 01","street":"Makka Al Mokarama","lat":24.67,"lng":46.71,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-17b---king-abdullah-rd---02","name":"Zone 17B - King Abdullah Rd - 02","street":"King Abdullah Rd","lat":24.752,"lng":46.622,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---sheikh-abdulaziz-al-sheikh-road---01","name":"Zone 006 - Sheikh Abdulaziz Al-Sheikh Road - 01","street":"Sheikh Abdulaziz Al-Sheikh Road","lat":24.71,"lng":46.67,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---prince-mohamed-bin-abdulaziz---04","name":"Zone 007 - Prince Mohamed Bin Abdulaziz - 04","street":"Prince Mohamed Bin Abdulaziz","lat":24.7031,"lng":46.6752,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---prince-mohamed-bin-abdulaziz---02","name":"Zone 007 - Prince Mohamed Bin Abdulaziz - 02","street":"Prince Mohamed Bin Abdulaziz","lat":24.7036,"lng":46.6757,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11b---96-street---01","name":"Zone 11B - 96 Street - 01","street":"96 Street","lat":24.708,"lng":46.69,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-15c---king-abdullah-rd---01","name":"Zone 15C - King Abdullah Rd - 01","street":"King Abdullah Rd","lat":24.7525,"lng":46.6225,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---prince-sultan-bin-salman-st---03","name":"Zone 003 - Prince Sultan bin Salman St - 03","street":"Prince Sultan bin Salman St","lat":24.7185,"lng":46.6625,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-002---king-abdullah---01","name":"Zone 002 - King Abdullah - 01","street":"King Abdullah","lat":24.752,"lng":46.622,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---al-takhassusi-road---02","name":"Zone 007 - Al Takhassusi Road - 02","street":"Al Takhassusi Road","lat":24.705,"lng":46.658,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---al-takhassusi-road---04","name":"Zone 007 - Al Takhassusi Road - 04","street":"Al Takhassusi Road","lat":24.7055,"lng":46.6585,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---king-fahd-road---01","name":"Zone 006 - King Fahd Road - 01","street":"King Fahd Road","lat":24.7136,"lng":46.6753,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14f---imam-saud-road---01","name":"Zone 14F - Imam Saud Road - 01","street":"Imam Saud Road","lat":24.72,"lng":46.64,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11b---al-ulaya-st---01","name":"Zone 11B - Al Ulaya St - 01","street":"Al Ulaya St","lat":24.698,"lng":46.683,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14e---imam-saud-road---01","name":"Zone 14E - Imam Saud Road - 01","street":"Imam Saud Road","lat":24.7205,"lng":46.6405,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-003---king-abdullah-st---01","name":"Zone 003 - King Abdullah St - 01","street":"King Abdullah St","lat":24.75,"lng":46.62,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14c---imam-saud-road---01","name":"Zone 14C - Imam Saud Road - 01","street":"Imam Saud Road","lat":24.721,"lng":46.641,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-3---al-ulaya-st---01","name":"Zone 3 - Al Ulaya St - 01","street":"Al Ulaya St","lat":24.6985,"lng":46.6835,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11b---andalus---01","name":"Zone 11B - Andalus - 01","street":"Andalus","lat":24.72,"lng":46.695,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---al-takhassusi-road---03","name":"Zone 007 - Al Takhassusi Road - 03","street":"Al Takhassusi Road","lat":24.706,"lng":46.659,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14b--imam-saud-road---01","name":"Zone 14B- Imam Saud Road - 01","street":"Imam Saud Road","lat":24.7201,"lng":46.6402,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11b---king-fahd-st---01","name":"Zone 11B - King Fahd St - 01","street":"King Fahd St","lat":24.7136,"lng":46.6753,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-007---al-takhassusi-road---01","name":"Zone 007 - Al Takhassusi Road - 01","street":"Al Takhassusi Road","lat":24.7065,"lng":46.6595,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---al-uroba-road---02","name":"Zone 006 - Al Uroba Road - 02","street":"Al Uroba Road","lat":24.7276,"lng":46.6608,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11b---prince-sultan-bin-salman-st--01","name":"Zone 11B - Prince Sultan bin Salman St- 01","street":"Prince Sultan bin Salman St- 01","lat":24.718,"lng":46.662,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---al-uroba-road---01","name":"Zone 006 - Al Uroba Road - 01","street":"Al Uroba Road","lat":24.7281,"lng":46.6613,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---al-takhassusi-road---04","name":"Zone 006 - Al Takhassusi Road - 04","street":"Al Takhassusi Road","lat":24.707,"lng":46.66,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---al-takhassusi-road---02","name":"Zone 006 - Al Takhassusi Road - 02","street":"Al Takhassusi Road","lat":24.7075,"lng":46.6605,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14d---imam-saud-road---01","name":"Zone 14D - Imam Saud Road - 01","street":"Imam Saud Road","lat":24.7215,"lng":46.6415,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14a---imam-saud-road---01","name":"Zone 14A - Imam Saud Road - 01","street":"Imam Saud Road","lat":24.722,"lng":46.642,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-002---king-abdulaziz---01","name":"Zone 002 - King Abdulaziz - 01","street":"King Abdulaziz","lat":24.6892,"lng":46.7234,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-15a--imam-abdullah-bin-saud---01","name":"Zone 15A- Imam Abdullah bin Saud - 01","street":"Imam Abdullah bin Saud","lat":24.735,"lng":46.63,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---prince-sultan-bin-salman-road---02","name":"Zone 006 - Prince Sultan Bin Salman Road - 02","street":"Prince Sultan Bin Salman Road","lat":24.718,"lng":46.662,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---prince-sultan-bin-salman-road---01","name":"Zone 006 - Prince Sultan Bin Salman Road - 01","street":"Prince Sultan Bin Salman Road","lat":24.7185,"lng":46.6625,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-11b---king-abdullah-st---01","name":"Zone 11B - King Abdullah St - 01","street":"King Abdullah St","lat":24.7505,"lng":46.6205,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14c---othman-bin-affan-road---01","name":"Zone 14C - Othman Bin Affan road - 01","street":"Othman Bin Affan road","lat":24.762,"lng":46.692,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14b---othman-bin-affan-road---01","name":"Zone 14B - Othman Bin Affan road - 01","street":"Othman Bin Affan road","lat":24.7625,"lng":46.6925,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-002---112-street---01","name":"Zone 002 - 112 Street - 01","street":"112 Street","lat":24.73,"lng":46.65,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-15b--imam-abdullah-bin-saud---02","name":"Zone 15B- Imam Abdullah bin Saud - 02","street":"Imam Abdullah bin Saud","lat":24.7351,"lng":46.6301,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---al-takhassusi-road---01","name":"Zone 006 - Al Takhassusi Road - 01","street":"Al Takhassusi Road","lat":24.708,"lng":46.661,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---king-abdullah-road---01","name":"Zone 006 - King Abdullah Road - 01","street":"King Abdullah Road","lat":24.75,"lng":46.62,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14a---abu-baker-rd---01","name":"Zone 14A - Abu Baker Rd - 01","street":"Abu Baker Rd","lat":24.765,"lng":46.695,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---imam-saud-road---01","name":"Zone 001 - Imam Saud Road - 01","street":"Imam Saud Road","lat":24.7225,"lng":46.6425,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-14b---abu-baker-rd---01","name":"Zone 14B - Abu Baker Rd - 01","street":"Abu Baker Rd","lat":24.7655,"lng":46.6955,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---al-takhassusi-road---03","name":"Zone 006 - Al Takhassusi Road - 03","street":"Al Takhassusi Road","lat":24.7085,"lng":46.6615,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-002---al-ulaya---01","name":"Zone 002 - Al Ulaya - 01","street":"Al Ulaya","lat":24.699,"lng":46.684,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13b---king-abdullah---01","name":"Zone 13B - King Abdullah - 01","street":"King Abdullah","lat":24.7525,"lng":46.6225,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-002---king-fahd-road---02","name":"Zone 002 - King Fahd Road - 02","street":"King Fahd Road","lat":24.7141,"lng":46.6758,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-002---al-ulaya---02","name":"Zone 002 - Al Ulaya - 02","street":"Al Ulaya","lat":24.6995,"lng":46.6845,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-006---king-abdullah-road---02","name":"Zone 006 - King Abdullah Road - 02","street":"King Abdullah Road","lat":24.7505,"lng":46.6205,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-15b--imam-abdullah-bin-saud---01","name":"Zone 15B- Imam Abdullah bin Saud - 01","street":"Imam Abdullah bin Saud","lat":24.7352,"lng":46.6302,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-002---imam-saud-road---01","name":"Zone 002 - Imam Saud Road - 01","street":"Imam Saud Road","lat":24.723,"lng":46.643,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-002---king-fahd-road---01","name":"Zone 002 - King Fahd Road - 01","street":"King Fahd Road","lat":24.7146,"lng":46.6763,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---king-abdulaziz-road---01","name":"Zone 001 - King Abdulaziz Road - 01","street":"King Abdulaziz Road","lat":24.6877,"lng":46.7219,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---om-el-hammam---05","name":"Zone 16 - Om El-Hammam - 05","street":"Om El-Hammam","lat":24.665,"lng":46.65,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---al-uroba-branch-road---01","name":"zone 16 - Al Uroba Branch Road - 01","street":"Al Uroba Branch Road","lat":24.7271,"lng":46.6603,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---imam-saud-road---02","name":"Zone 001 - Imam Saud Road - 02","street":"Imam Saud Road","lat":24.7235,"lng":46.6435,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---ibn-sina---02","name":"Zone 001 - Ibn Sina - 02","street":"Ibn Sina","lat":24.7,"lng":46.69,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---ibn-sina---01","name":"Zone 001 - Ibn Sina - 01","street":"Ibn Sina","lat":24.7005,"lng":46.6905,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---om-el-hammam---04","name":"Zone 16 - Om El-Hammam - 04","street":"Om El-Hammam","lat":24.6655,"lng":46.6505,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13b---king-abdullah---02","name":"Zone 13B - King Abdullah - 02","street":"King Abdullah","lat":24.753,"lng":46.623,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---om-el-hammam---03","name":"Zone 16 - Om El-Hammam - 03","street":"Om El-Hammam","lat":24.666,"lng":46.651,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---om-el-hammam---01","name":"Zone 16 - Om El-Hammam - 01","street":"Om El-Hammam","lat":24.6665,"lng":46.6515,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---om-el-hammam---02","name":"Zone 16 - Om El-Hammam - 02","street":"Om El-Hammam","lat":24.667,"lng":46.652,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---king-abdullah---02","name":"Zone 16 - King Abdullah - 02","street":"King Abdullah","lat":24.7535,"lng":46.6235,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13b---al-takhassusi---02","name":"Zone 13B - Al Takhassusi - 02","street":"Al Takhassusi","lat":24.705,"lng":46.658,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13b---al-takhassusi---01","name":"Zone 13B - Al Takhassusi - 01","street":"Al Takhassusi","lat":24.7055,"lng":46.6585,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13a---imam-saud-bin-abdulaziz---01","name":"Zone 13A - Imam Saud bin Abdulaziz - 01","street":"Imam Saud bin Abdulaziz","lat":24.72,"lng":46.64,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13b---imam-saud-bin-abdulaziz---02","name":"Zone 13B - Imam Saud bin Abdulaziz - 02","street":"Imam Saud bin Abdulaziz","lat":24.7205,"lng":46.6405,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---al-ulaya---01","name":"Zone 001 - Al Ulaya - 01","street":"Al Ulaya","lat":24.7,"lng":46.685,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---northern-ring-road---01","name":"Zone 001 - Northern Ring Road - 01","street":"Northern Ring Road","lat":24.78,"lng":46.72,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---al-ulaya---02","name":"Zone 001 - Al Ulaya - 02","street":"Al Ulaya","lat":24.7005,"lng":46.6855,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---prince-nawaf-bin-abdulaziz---02","name":"Zone 16 - Prince Nawaf Bin Abdulaziz - 02","street":"Prince Nawaf Bin Abdulaziz","lat":24.66,"lng":46.64,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---prince-nawaf-bin-abdulaziz---01","name":"Zone 16 - Prince Nawaf Bin Abdulaziz - 01","street":"Prince Nawaf Bin Abdulaziz","lat":24.6605,"lng":46.6405,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---king-fahd-road---01","name":"Zone 001 - King Fahd Road - 01","street":"King Fahd Road","lat":24.7151,"lng":46.6768,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---northern-ring-road---02","name":"Zone 001 - Northern Ring Road - 02","street":"Northern Ring Road","lat":24.7805,"lng":46.7205,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---the-area-between-al-ulaya-and-king-fahd---01","name":"Zone 001 - The Area Between Al Ulaya and King Fahd - 01","street":"The Area Between Al Ulaya and King Fahd","lat":24.698,"lng":46.683,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-001---northern-ring-road---03","name":"Zone 001 - Northern Ring Road - 03","street":"Northern Ring Road","lat":24.781,"lng":46.721,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13b---imam-saud-bin-abdulaziz---01","name":"Zone 13B - Imam Saud bin Abdulaziz - 01","street":"Imam Saud bin Abdulaziz","lat":24.721,"lng":46.641,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13a---imam-saud-bin-abdulaziz---02","name":"Zone 13A - Imam Saud bin Abdulaziz - 02","street":"Imam Saud bin Abdulaziz","lat":24.7215,"lng":46.6415,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13a---al-takhassusi---02","name":"Zone 13A - Al Takhassusi - 02","street":"Al Takhassusi","lat":24.706,"lng":46.659,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-13a---al-takhassusi---01","name":"Zone 13A - Al Takhassusi - 01","street":"Al Takhassusi","lat":24.7065,"lng":46.6595,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"},{"id":"zone-16---king-abdullah---01","name":"Zone 16 - King Abdullah - 01","street":"King Abdullah","lat":24.754,"lng":46.624,"radius":250,"freeFrom":"00:00","freeTo":"08:00","paidFrom":"08:00","paidTo":"00:00","pricePerHour":3.45,"currency":"SAR"}];
+
+// ── STATE ────────────────────────────────────────────────────────
+let state = {
+  monitoring: false,
+  currentZone: null,
+  parkedAt: null,
+  paid: false,
+  reminded5: false,
+  reminded10: false,
+  tickInterval: null,
+  watchId: null,
+  userLat: null,
+  userLng: null,
+  demoTime: null, // override for demo
+};
+
+// ── UTILS ────────────────────────────────────────────────────────
+function haversineDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function isPaidHours(overrideHour) {
+  const h = overrideHour !== undefined ? overrideHour : new Date().getHours();
+  return h >= 8 && h < 24; // paid 8AM-midnight
+}
+
+function fmtTime(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const ss = s % 60;
+  return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+}
+
+function nowStr() {
+  return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+// ── NOTIFICATION LOG ─────────────────────────────────────────────
+function addLog(msg, type = 'info', emoji = '📍') {
+  const list = document.getElementById('notifList');
+  const empty = list.querySelector('.empty-log');
+  if (empty) empty.remove();
+
+  const item = document.createElement('div');
+  item.className = `notif-item ${type}`;
+  item.innerHTML = `
+    <span class="notif-emoji">${emoji}</span>
+    <div class="notif-body">
+      <div class="notif-msg">${msg}</div>
+      <div class="notif-time">${nowStr()}</div>
+    </div>`;
+  list.prepend(item);
+}
+
+function clearLog() {
+  document.getElementById('notifList').innerHTML = '<div class="empty-log">Log cleared.</div>';
+}
+
+// ── UI UPDATES ───────────────────────────────────────────────────
+function setStatus(icon, label, labelClass, zoneName, ringClass) {
+  document.getElementById('statusIcon').textContent = icon;
+  const lbl = document.getElementById('statusLabel');
+  lbl.textContent = label;
+  lbl.className = 'status-label ' + labelClass;
+  document.getElementById('zoneName').textContent = zoneName;
+  const ring = document.getElementById('statusRing');
+  ring.className = 'status-dot-ring ' + ringClass;
+}
+
+function showTimer(show) {
+  document.getElementById('timerBar').className = 'timer-bar' + (show ? ' show' : '');
+}
+
+function showParkingActions(show) {
+  document.getElementById('actionsRow').style.display = show ? 'none' : 'flex';
+  document.getElementById('parkingActions').style.display = show ? 'flex' : 'none';
+}
+
+function updateTimer() {
+  if (!state.parkedAt || !state.currentZone) return;
+
+  const elapsed = state.demoTime !== null ? state.demoTime : (Date.now() - state.parkedAt);
+  const mins = elapsed / 60000;
+  const graceMins = 15;
+  const inGrace = mins < graceMins;
+  const graceProgress = Math.min(mins / graceMins, 1) * 100;
+
+  const display = document.getElementById('timerDisplay');
+  const fill = document.getElementById('progressFill');
+  const graceLabel = document.getElementById('graceLabel');
+
+  display.textContent = fmtTime(elapsed);
+
+  if (state.paid) {
+    display.style.color = 'var(--green)';
+    fill.style.background = 'var(--green)';
+    graceLabel.style.color = 'var(--green)';
+    graceLabel.textContent = '✓ Paid';
+    fill.style.width = '100%';
+    setStatus('✅', 'PAID', 'paid', state.currentZone.name, 'paid');
+    return;
+  }
+
+  if (inGrace) {
+    display.className = 'timer-value';
+    fill.style.background = 'var(--gold)';
+    fill.style.width = graceProgress + '%';
+    graceLabel.style.color = 'var(--green)';
+    graceLabel.textContent = '✓ In grace period';
+    setStatus('⏱️', 'PARKED', 'active', state.currentZone.name, 'active');
+  } else {
+    const overdue = mins - graceMins;
+    if (overdue > 5) {
+      display.className = 'timer-value danger';
+      fill.style.background = 'var(--red)';
+      setStatus('🚨', 'UNPAID!', 'danger', state.currentZone.name, 'danger');
+      graceLabel.style.color = 'var(--red)';
+      graceLabel.textContent = '⚠ Grace period expired';
+    } else {
+      display.className = 'timer-value warning';
+      fill.style.background = 'var(--orange)';
+      setStatus('⚠️', 'PAY NOW', 'warning', state.currentZone.name, 'warning');
+      graceLabel.style.color = 'var(--orange)';
+      graceLabel.textContent = '⚠ Grace period expired';
+    }
+    fill.style.width = '100%';
+  }
+
+  // Reminders
+  if (mins >= 5 && !state.reminded5) {
+    state.reminded5 = true;
+    addLog(`⏰ Reminder: You've been parked for 5 minutes at <b>${state.currentZone.street}</b>. Did you pay? (3.45 SAR/hr)`, 'warn', '⏰');
+    if (Notification.permission === 'granted') {
+      new Notification('Parking Reminder — 5 min', { body: `Parked at ${state.currentZone.street}. Did you pay? 3.45 SAR/hr`, icon: '🅿️' });
+    }
+  }
+  if (mins >= 10 && !state.reminded10) {
+    state.reminded10 = true;
+    addLog(`🚨 Second reminder: 10 minutes parked at <b>${state.currentZone.street}</b>. Grace period ends at 15 min!`, 'danger', '🚨');
+    if (Notification.permission === 'granted') {
+      new Notification('Parking Reminder — 10 min ⚠️', { body: `Grace period ends in 5 min at ${state.currentZone.street}!`, icon: '🅿️' });
+    }
+  }
+}
+
+// ── ZONE CHECK ───────────────────────────────────────────────────
+function checkZones(lat, lng) {
+  let closest = null, closestDist = Infinity;
+
+  for (const z of ZONES) {
+    const d = haversineDistance(lat, lng, z.lat, z.lng);
+    if (d < z.radius && d < closestDist) {
+      closest = z;
+      closestDist = d;
+    }
+  }
+
+  if (closest && isPaidHours()) {
+    if (!state.currentZone || state.currentZone.id !== closest.id) {
+      // Entered new zone
+      state.currentZone = closest;
+      state.parkedAt = Date.now();
+      state.paid = false;
+      state.reminded5 = false;
+      state.reminded10 = false;
+      state.demoTime = null;
+      showTimer(true);
+      showParkingActions(true);
+      addLog(`Entered paid zone: <b>${closest.name}</b>. Monitoring started. Rate: 3.45 SAR/hr (free until 8AM).`, 'info', '📍');
+    }
+  } else if (!closest) {
+    if (state.currentZone) {
+      addLog(`Left paid zone: <b>${state.currentZone.name}</b>. Session ended.`, 'success', '✅');
+      resetSession(false);
+    } else {
+      setStatus('✅', 'FREE ZONE', '', 'No paid parking required here', '');
+    }
+  } else if (closest && !isPaidHours()) {
+    setStatus('🌙', 'FREE HOURS', '', `${closest.name} — free until 8AM`, '');
+  }
+}
+
+function resetSession(full = true) {
+  state.currentZone = null;
+  state.parkedAt = null;
+  state.paid = false;
+  state.reminded5 = false;
+  state.reminded10 = false;
+  state.demoTime = null;
+  showTimer(false);
+  showParkingActions(false);
+  if (full) setStatus('🔍', 'Scanning...', '', 'Watching for paid zones', '');
+}
+
+// ── MONITORING ───────────────────────────────────────────────────
+function startMonitoring() {
+  if (!navigator.geolocation) {
+    addLog('Geolocation not supported by this browser.', 'danger', '❌');
+    return;
+  }
+
+  Notification.requestPermission();
+
+  state.monitoring = true;
+  document.getElementById('startBtn').textContent = '📡 Monitoring...';
+  document.getElementById('startBtn').disabled = true;
+
+  const dot = document.getElementById('gpsDot');
+  const gpsText = document.getElementById('gpsText');
+  dot.className = 'gps-dot searching';
+  gpsText.textContent = 'Acquiring GPS signal...';
+
+  state.watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      state.userLat = pos.coords.latitude;
+      state.userLng = pos.coords.longitude;
+      dot.className = 'gps-dot on';
+      gpsText.textContent = 'GPS active — monitoring zones';
+      document.getElementById('gpsCoords').textContent =
+        `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+      checkZones(pos.coords.latitude, pos.coords.longitude);
+    },
+    (err) => {
+      dot.className = 'gps-dot';
+      gpsText.textContent = 'GPS error: ' + err.message;
+      addLog('GPS error: ' + err.message + ' — try Demo mode below.', 'danger', '❌');
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+  );
+
+  state.tickInterval = setInterval(updateTimer, 1000);
+  addLog('Monitoring started. Will alert at 5 and 10 minutes if in a paid zone during 8AM–12AM.', 'info', '📡');
+}
+
+function stopSession() {
+  if (state.currentZone) {
+    addLog(`Session stopped manually at <b>${state.currentZone.name}</b>.`, 'info', '🛑');
+  }
+  resetSession(true);
+}
+
+function markPaid() {
+  state.paid = true;
+  addLog(`Marked as paid at <b>${state.currentZone.name}</b>. 3.45 SAR/hr. Remember to extend before expiry!`, 'success', '✅');
+  updateTimer();
+}
+
+// ── ZONES PANEL ──────────────────────────────────────────────────
+function toggleZones() {
+  const list = document.getElementById('zonesList');
+  const arrow = document.getElementById('zonesArrow');
+  const show = !list.classList.contains('show');
+  list.classList.toggle('show', show);
+  arrow.textContent = show ? '▼' : '▶';
+
+  if (show && !list.children.length) {
+    ZONES.forEach(z => {
+      const item = document.createElement('div');
+      item.className = 'zone-item';
+      item.innerHTML = `<span>${z.name}</span><span class="zone-dist">${z.pricePerHour} SAR/hr</span>`;
+      list.appendChild(item);
+    });
+  }
+}
+
+// ── DEMO FUNCTIONS ───────────────────────────────────────────────
+function demoArrive() {
+  // Simulate arriving at Al Uroba zone
+  const zone = ZONES.find(z => z.street === 'Al Uroba St') || ZONES[0];
+  state.currentZone = zone;
+  state.parkedAt = Date.now();
+  state.paid = false;
+  state.reminded5 = false;
+  state.reminded10 = false;
+  state.demoTime = null;
+  showTimer(true);
+  showParkingActions(true);
+  if (!state.tickInterval) state.tickInterval = setInterval(updateTimer, 1000);
+  addLog(`[DEMO] Arrived at paid zone: <b>${zone.name}</b>. Timer started.`, 'info', '📍');
+  document.getElementById('gpsDot').className = 'gps-dot on';
+  document.getElementById('gpsText').textContent = 'GPS active (demo mode)';
+  updateTimer();
+}
+
+function demo5min() {
+  if (!state.currentZone) demoArrive();
+  state.demoTime = 5 * 60 * 1000 + 1000;
+  addLog('[DEMO] Jumped to 5 minutes elapsed.', 'info', '⏩');
+  updateTimer();
+}
+
+function demo10min() {
+  if (!state.currentZone) demoArrive();
+  state.demoTime = 10 * 60 * 1000 + 1000;
+  addLog('[DEMO] Jumped to 10 minutes elapsed.', 'info', '⏩');
+  updateTimer();
+}
+
+function demo15min() {
+  if (!state.currentZone) demoArrive();
+  state.demoTime = 15 * 60 * 1000 + 1000;
+  addLog('[DEMO] Jumped to 15 minutes — grace period ended!', 'warn', '⚠️');
+  updateTimer();
+}
+
+function demoLeave() {
+  addLog('[DEMO] Left the paid zone.', 'success', '🚗');
+  resetSession(true);
+}
+
+function demoFreeHours() {
+  addLog('[DEMO] Current time is 2AM — this zone is free right now.', 'success', '🌙');
+  setStatus('🌙', 'FREE HOURS', '', 'Paid zones are free between 12AM and 8AM', '');
+}
+
+// Init
+setStatus('🔍', 'Standby', '', 'Press Start Monitoring or try Demo mode', '');
+</script>
+</body>
+</html>
