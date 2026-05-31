@@ -8,7 +8,7 @@ enum ParkingAppState: Equatable {
     case permissionRequired
     case scanning
     case outsideZone
-    case freeHours(ParkingZone)
+    case freeHours(ParkingDistrict)
     case inZone(ParkingSession)
     case paid(ParkingSession)
 
@@ -47,7 +47,7 @@ final class LocationManager: NSObject, ObservableObject {
         super.init()
         clManager.delegate = self
         clManager.desiredAccuracy = kCLLocationAccuracyBest
-        clManager.distanceFilter = 15 // metres
+        clManager.distanceFilter = 15
         authorizationStatus = clManager.authorizationStatus
         applyAuthorizationStatus(clManager.authorizationStatus)
     }
@@ -73,15 +73,15 @@ final class LocationManager: NSObject, ObservableObject {
         session.isPaid = true
         NotificationManager.shared.cancelAllReminders()
         state = .paid(session)
-        addLog(.paid(session.zone))
+        addLog(.paid(session.district))
     }
 
     func stopSession() {
         NotificationManager.shared.cancelAllReminders()
         if case .inZone(let session) = state {
-            addLog(.sessionStopped(session.zone))
+            addLog(.sessionStopped(session.district))
         } else if case .paid(let session) = state {
-            addLog(.sessionStopped(session.zone))
+            addLog(.sessionStopped(session.district))
         }
         if let coord = lastCoordinate {
             evaluateZone(at: coord)
@@ -114,25 +114,23 @@ final class LocationManager: NSObject, ObservableObject {
 
         let now = Date()
 
-        // Silent periods: outside paid hours, Fridays, public holidays
         guard isPaidHours(now) && !isFriday(now) && !isSaudiHoliday(now) else {
-            if let (zone, _) = ZoneDatabase.shared.nearestZone(at: coord) {
-                state = .freeHours(zone)
+            if let district = ZoneDatabase.shared.district(containing: coord) {
+                state = .freeHours(district)
             } else {
                 state = .outsideZone
             }
             return
         }
 
-        guard let (zone, _) = ZoneDatabase.shared.nearestZone(at: coord) else {
-            // Left any zone
+        guard let district = ZoneDatabase.shared.district(containing: coord) else {
             switch state {
             case .inZone(let session):
                 NotificationManager.shared.cancelAllReminders()
-                addLog(.leftZone(session.zone))
+                addLog(.leftZone(session.district))
                 state = .outsideZone
             case .paid(let session):
-                addLog(.leftZone(session.zone))
+                addLog(.leftZone(session.district))
                 state = .outsideZone
             default:
                 state = .outsideZone
@@ -140,37 +138,31 @@ final class LocationManager: NSObject, ObservableObject {
             return
         }
 
-        // Inside a zone during paid hours
         switch state {
         case .inZone(let session):
-            if session.zone == zone {
-                // Same zone — notifications already scheduled via UNCalendar; nothing extra needed
+            if session.district == district {
                 state = .inZone(session)
             } else {
-                // Moved to a different zone
                 NotificationManager.shared.cancelAllReminders()
-                addLog(.leftZone(session.zone))
-                let newSession = ParkingSession(zone: zone, startTime: now)
+                addLog(.leftZone(session.district))
+                let newSession = ParkingSession(district: district, startTime: now)
                 NotificationManager.shared.scheduleReminders(for: newSession, language: language)
-                addLog(.enteredZone(zone))
+                addLog(.enteredZone(district))
                 state = .inZone(newSession)
             }
 
         case .paid(let session):
-            if session.zone != zone {
-                // Drove to a different zone after paying
-                let newSession = ParkingSession(zone: zone, startTime: now)
+            if session.district != district {
+                let newSession = ParkingSession(district: district, startTime: now)
                 NotificationManager.shared.scheduleReminders(for: newSession, language: language)
-                addLog(.enteredZone(zone))
+                addLog(.enteredZone(district))
                 state = .inZone(newSession)
             }
-            // Otherwise keep paid state
 
         case .freeHours, .scanning, .outsideZone, .permissionRequired:
-            // Fresh entry into a zone
-            let newSession = ParkingSession(zone: zone, startTime: now)
+            let newSession = ParkingSession(district: district, startTime: now)
             NotificationManager.shared.scheduleReminders(for: newSession, language: language)
-            addLog(.enteredZone(zone))
+            addLog(.enteredZone(district))
             state = .inZone(newSession)
         }
     }
@@ -179,40 +171,30 @@ final class LocationManager: NSObject, ObservableObject {
         authorizationStatus == .authorizedAlways || authorizationStatus == .authorizedWhenInUse
     }
 
-    // Paid hours: 08:00 – 00:00 (midnight = end of day)
     private func isPaidHours(_ date: Date) -> Bool {
         let h = Calendar.current.component(.hour, from: date)
-        return h >= 8 // 8am to 11pm inclusive; midnight (0) is outside
+        return h >= 8
     }
 
-    // Friday = weekday 6 in Gregorian (Sun=1…Sat=7)
     private func isFriday(_ date: Date) -> Bool {
         Calendar.current.component(.weekday, from: date) == 6
     }
 
-    // Saudi public holidays (hardcoded for 2025–2026)
     private func isSaudiHoliday(_ date: Date) -> Bool {
         let cal = Calendar.current
         let m = cal.component(.month, from: date)
         let d = cal.component(.day, from: date)
         let y = cal.component(.year, from: date)
 
-        // Fixed annual holidays
-        if m == 2 && d == 22 { return true }  // Founding Day
-        if m == 9 && d == 23 { return true }  // National Day
+        if m == 2 && d == 22 { return true }
+        if m == 9 && d == 23 { return true }
 
-        // Lunar holidays — approximate Gregorian dates 2025
         if y == 2025 {
-            // Eid Al Fitr: Mar 30 – Apr 2
             if (m == 3 && d >= 30) || (m == 4 && d <= 2) { return true }
-            // Eid Al Adha: Jun 6–9
             if m == 6 && d >= 6 && d <= 9 { return true }
         }
-        // Approximate 2026
         if y == 2026 {
-            // Eid Al Fitr: Mar 19–22
             if m == 3 && d >= 19 && d <= 22 { return true }
-            // Eid Al Adha: May 26–29
             if m == 5 && d >= 26 && d <= 29 { return true }
         }
         return false
@@ -221,10 +203,10 @@ final class LocationManager: NSObject, ObservableObject {
     // MARK: - Activity log
 
     enum ActivityEntry: Identifiable {
-        case enteredZone(ParkingZone)
-        case leftZone(ParkingZone)
-        case paid(ParkingZone)
-        case sessionStopped(ParkingZone)
+        case enteredZone(ParkingDistrict)
+        case leftZone(ParkingDistrict)
+        case paid(ParkingDistrict)
+        case sessionStopped(ParkingDistrict)
 
         var id: UUID { UUID() }
         var timestamp: Date { Date() }

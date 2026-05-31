@@ -84,7 +84,7 @@ struct S {
 
     static let english = S(
         appName: "Mawqif",
-        appSubtitle: "147 zones · 3.45 SAR/hr · 8AM–12AM",
+        appSubtitle: "9 districts · 3.45 SAR/hr · 8AM–12AM",
         statusScanning: "Scanning",
         statusFreeHours: "Free Hours",
         statusParked: "Parked",
@@ -112,7 +112,7 @@ struct S {
         hoursLabel: "8:00 AM – 12:00 AM",
         noZoneNearby: "No paid zone detected nearby",
         freeUntil: "Free until 8:00 AM",
-        zones147: "147 zones monitored",
+        zones147: "9 districts monitored",
         gpsSearching: "Acquiring GPS…",
         gpsActive: "GPS active",
         gpsNoPermission: "Location permission required",
@@ -129,7 +129,7 @@ struct S {
 
     static let arabic = S(
         appName: "مواقف",
-        appSubtitle: "١٤٧ منطقة · ٣٫٤٥ ريال/ساعة · ٨ص–١٢م",
+        appSubtitle: "٩ أحياء · ٣٫٤٥ ريال/ساعة · ٨ص–١٢م",
         statusScanning: "جاري البحث",
         statusFreeHours: "وقت مجاني",
         statusParked: "موقوف",
@@ -157,7 +157,7 @@ struct S {
         hoursLabel: "٨:٠٠ ص – ١٢:٠٠ م",
         noZoneNearby: "لا توجد منطقة وقوف مدفوعة قريبة",
         freeUntil: "مجاني حتى ٨:٠٠ صباحاً",
-        zones147: "١٤٧ منطقة مراقبة",
+        zones147: "٩ أحياء مراقبة",
         gpsSearching: "جاري تحديد الموقع…",
         gpsActive: "GPS نشط",
         gpsNoPermission: "مطلوب إذن الموقع",

@@ -410,12 +410,12 @@ struct MainView: View {
 
     private var zoneDisplayText: String {
         switch locationManager.state {
-        case .permissionRequired: return s.permTitle
-        case .scanning:           return s.zones147
-        case .outsideZone:        return s.noZoneNearby
-        case .freeHours(let z):   return z.displayName + " · " + s.freeUntil
-        case .inZone(let s2):     return s2.zone.displayName
-        case .paid(let s2):       return s2.zone.displayName
+        case .permissionRequired:  return s.permTitle
+        case .scanning:            return s.zones147
+        case .outsideZone:         return s.noZoneNearby
+        case .freeHours(let d):    return d.localizedName(for: lang) + " · " + s.freeUntil
+        case .inZone(let session): return session.district.localizedName(for: lang)
+        case .paid(let session):   return session.district.localizedName(for: lang)
         }
     }
 
@@ -472,10 +472,10 @@ private struct ActivityRow: View {
 
     private var message: String {
         switch entry {
-        case .enteredZone(let z): return "\(s.enteredZone): \(z.displayName)"
-        case .leftZone(let z):    return "\(s.leftZone): \(z.displayName)"
-        case .paid(let z):        return "\(s.markedPaid): \(z.displayName)"
-        case .sessionStopped(let z): return "\(s.sessionStopped): \(z.displayName)"
+        case .enteredZone(let d):    return "\(s.enteredZone): \(d.name)"
+        case .leftZone(let d):       return "\(s.leftZone): \(d.name)"
+        case .paid(let d):           return "\(s.markedPaid): \(d.name)"
+        case .sessionStopped(let d): return "\(s.sessionStopped): \(d.name)"
         }
     }
 

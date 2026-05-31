@@ -1,13 +1,9 @@
 import Foundation
 
 struct ParkingSession: Equatable {
-    let zone: ParkingZone
+    let district: ParkingDistrict
     let startTime: Date
     var isPaid: Bool = false
-    var fiveMinNotified: Bool = false
-    var tenMinNotified: Bool = false
-
-    // MARK: - Computed
 
     func elapsed(relativeTo now: Date = Date()) -> TimeInterval {
         now.timeIntervalSince(startTime)

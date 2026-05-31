@@ -42,15 +42,15 @@ final class NotificationManager: NSObject, ObservableObject {
         let fiveMinDate  = session.startTime.addingTimeInterval(5 * 60)
         let tenMinDate   = session.startTime.addingTimeInterval(10 * 60)
 
-        let zoneName = session.zone.displayName
+        let districtName = session.district.localizedName(for: language)
 
         schedule(id: NotifID.fiveMin,
                  title: language == .arabic
                     ? "تذكير بالموقف — ٥ دقائق"
                     : "Parking Reminder — 5 min",
                  body: language == .arabic
-                    ? "لقيت سيارتك في \(zoneName) — هل دفعت؟ (٣٫٤٥ ريال/ساعة)"
-                    : "Parked at \(zoneName). Did you pay? 3.45 SAR/hr",
+                    ? "سيارتك في حي \(districtName) — هل دفعت؟ (٣٫٤٥ ريال/ساعة)"
+                    : "Parked in \(districtName). Did you pay? 3.45 SAR/hr",
                  at: fiveMinDate)
 
         schedule(id: NotifID.tenMin,
@@ -58,8 +58,8 @@ final class NotificationManager: NSObject, ObservableObject {
                     ? "تذكير بالموقف — ١٠ دقائق ⚠️"
                     : "Parking Reminder — 10 min ⚠️",
                  body: language == .arabic
-                    ? "فترة السماح تنتهي بعد ٥ دقائق في \(zoneName)!"
-                    : "Grace period ends in 5 min at \(zoneName)!",
+                    ? "فترة السماح تنتهي بعد ٥ دقائق في حي \(districtName)!"
+                    : "Grace period ends in 5 min in \(districtName)!",
                  at: tenMinDate)
     }
 
